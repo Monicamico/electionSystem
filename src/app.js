@@ -67,19 +67,19 @@ App = {
       // Load smart contract
       const contract = await App.contracts.Mayor.deployed()
       App.contractInstance = contract
-  
-      const value = await App.contractInstance.get()
-      $('#value').html(value)
-  
+      const escrow = await App.contractInstance.getEscrow();
+      $('#escrow').html(escrow)
+      const candidates = await App.contractInstance.getCandidates();
+      $('#candidates').html(candidates)
       App.setLoading(false)
     },
   
-    set: async () => {
+    /*set: async () => {
       App.setLoading(true)
       const newValue = $('#newValue').val()
       await App.contractInstance.set(newValue)
       window.alert('Value updated! Refresh this page to see the new value (it might take a few seconds).')
-    },
+    },*/
   
     setLoading: (boolean) => {
       App.loading = boolean
