@@ -70,7 +70,21 @@ App = {
       const escrow = await App.contractInstance.getEscrow();
       $('#escrow').html(escrow)
       const candidates = await App.contractInstance.getCandidates();
-      $('#candidates').html(candidates)
+      console.log(candidates);
+      const candidates_list = candidates;
+      var mySelect1 = $('#candidates_list');
+      $.each(candidates_list, function(val, text) {
+          mySelect1.append(
+            $('<option></option>').val(val).html(text)
+          );
+      });
+      var mySelect = $('#candidates');
+      $.each(candidates, function(val, text) {
+          mySelect.append(
+            $('<option></option>').val(val).html(text)
+          );
+      });
+      //$('#candidates').html(candidates)
       App.setLoading(false)
     },
   
