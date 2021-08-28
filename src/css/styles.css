@@ -11320,7 +11320,7 @@ header.masthead .masthead-content {
   position: relative;
 }
 header.masthead .masthead-content .masthead-heading {
-  font-size: 4rem;
+  font-size: 3.5rem;
 }
 header.masthead .masthead-content .masthead-subheading {
   font-size: 2rem;
@@ -11356,15 +11356,16 @@ header.masthead .bg-circle-4 {
   right: 35%;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 998px) {
   header.masthead {
-    padding-top: calc(10rem + 55px);
-    padding-bottom: 10rem;
+    padding-top: calc(12rem + 55px);
+    padding-bottom: 11.5rem;
   }
   header.masthead .masthead-content .masthead-heading {
-    font-size: 6rem;
+    font-size: 5.5rem;
   }
   header.masthead .masthead-content .masthead-subheading {
-    font-size: 4rem;
+    font-size: 2.5rem;
+    padding-bottom: 1rem;
   }
 }

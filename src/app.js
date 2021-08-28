@@ -56,7 +56,6 @@ App = {
       if (App.loading) {
         return
       }
-  
       // Update app loading state
       App.setLoading(true)
   
@@ -67,6 +66,8 @@ App = {
       // Load smart contract
       const contract = await App.contracts.Mayor.deployed()
       App.contractInstance = contract
+
+      // Load escrow and candidates
       const escrow = await App.contractInstance.getEscrow();
       $('#escrow').html(escrow)
       const candidates = await App.contractInstance.getCandidates();
@@ -84,7 +85,7 @@ App = {
             $('<option></option>').val(val).html(text)
           );
       });
-      //$('#candidates').html(candidates)
+      
       App.setLoading(false)
     },
   

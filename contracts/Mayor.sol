@@ -7,6 +7,11 @@ contract Mayor {
         address candidate_symbol;
     }
 
+    struct ElectorsResult {
+        address payable[] winners;
+        address payable[] losers;
+    }
+
     struct Vote {
         uint souls;
         uint number;
@@ -16,6 +21,8 @@ contract Mayor {
         uint32 quorum;
         uint32 envelopes_casted;
         uint32 envelopes_opened;
+        uint256 candidates_deposit_soul;
+        uint256 candidates_number;
     }
 
     event NewMayor(address _candidate); 
@@ -23,9 +30,10 @@ contract Mayor {
     event Tie(address _escrow);
     event EnvelopeCast(address _voter);
     event EnvelopeOpen(address _voter, uint _soul, address candidate_symbol);
-    
+
     modifier canVote() {
         require(voting_condition.envelopes_casted < voting_condition.quorum, "Cannot vote now, voting quorum has been reached");
+        require(voting_condition.candidates_deposit_soul == voting_condition.candidates_number, "Cannot vote now, all candidates must deposit some soul");
         _;   
     }
     
@@ -42,19 +50,23 @@ contract Mayor {
     address payable[] public candidates;
     address payable public escrow;
     mapping(address => bytes32) public envelopes;
+    mapping(address => uint) public deposit;
     mapping(address => bool) public envelopes_opened;
     Conditions public voting_condition;
     mapping(address => Vote) public votes;
     bool canCall = true;
     mapping(address => Refund) public souls;
     address payable[] public voters;
-    uint32 value = 32;
+    ElectorsResult results;
 
     constructor(address payable[] memory _candidates, address payable _escrow, uint32 _quorum) {
         candidates = _candidates;
         escrow = _escrow;
-        voting_condition = Conditions({quorum: _quorum, envelopes_casted: 0,
-        envelopes_opened: 0});
+        voting_condition = Conditions({quorum: _quorum, 
+                                    envelopes_casted: 0,
+                                    candidates_deposit_soul: 0,
+                                    envelopes_opened: 0,
+                                    candidates_number: _candidates.length });
     }
 
     function getEscrow() public view returns(address payable) {
@@ -63,6 +75,12 @@ contract Mayor {
 
     function getCandidates() public view returns(address payable[] memory){
         return candidates;
+    }
+
+    function deposit_soul() public payable {
+        require(deposit[msg.sender] == 0, "Candidates has already done deposit");
+        voting_condition.candidates_deposit_soul++;
+        deposit[msg.sender] = msg.value;
     }
 
     function cast_envelope(bytes32 _envelope) canVote public {
@@ -120,6 +138,18 @@ contract Mayor {
         return winner;
     } 
 
+    function splitElectors(address payable winner) canCheckOutcome private {
+        address payable voter;
+        for (uint i=0; i < voters.length; i++) {
+            voter = voters[i];
+             if (souls[voter].candidate_symbol == winner){
+                results.winners.push(payable(voter));
+             } else {
+                 results.losers.push(payable(voter));
+             }
+        }
+    }
+
     function mayor_or_sayonara() canCheckOutcome public {
         address payable voter;
         uint total_soul = 0;
@@ -127,22 +157,33 @@ contract Mayor {
         if (winner == escrow){
             for (uint i=0; i < candidates.length; i++) {
                 address candidate = candidates[i];
-                total_soul = total_soul + votes[candidate].souls;
+                total_soul = total_soul + votes[candidate].souls + deposit[candidate];
                 votes[candidate].souls = 0;
+                deposit[candidate]=0;
             }
             escrow.transfer(total_soul); 
             total_soul = 0;
             emit Tie(escrow);
         } else {
-            for (uint i=0; i < voters.length; i++) {
-                voter = voters[i];
-                if (souls[voter].candidate_symbol != winner){
-                    uint soul_voter = souls[voter].soul;
-                    souls[voter].soul = 0;
-                    voter.transfer(soul_voter);
-                } else {
-                    total_soul = total_soul + souls[voter].soul;
-                }
+            splitElectors(winner);
+            uint deposit_winner = deposit[winner];
+            uint single_win_el = deposit_winner / results.winners.length;
+            deposit[winner] = 0;
+            for (uint i=0; i < results.winners.length; i++) { 
+                voter = results.winners[i];
+                total_soul = total_soul + souls[voter].soul;
+                souls[voter].soul = 0;
+                voter.transfer(single_win_el);
+            }
+            for (uint i=0; i < results.losers.length; i++){
+                voter = results.losers[i];
+                uint soul_voter = souls[voter].soul;
+                souls[voter].soul = 0;
+                voter.transfer(soul_voter);
+            }
+            for (uint i=0; i < candidates.length; i++) {
+                total_soul = total_soul + deposit[candidates[i]];
+                deposit[candidates[i]] = 0;
             }
             winner.transfer(total_soul); 
             total_soul = 0;
