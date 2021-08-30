@@ -15,6 +15,7 @@
         <!-- Core theme CSS (includes Bootstrap)-->
         <link href="css/styles.css" rel="stylesheet" />
     </head>
+
     <body id="page-top">
         <!-- Navigation-->
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
@@ -42,6 +43,28 @@
             <div class="bg-circle-3 bg-circle"></div>
             <div class="bg-circle-4 bg-circle"></div>
         </header>
+
+        <!-- Content Deposit -->
+        <section id="is_candidate">
+            <div class="container px-5">
+                <div class="row gx-5 align-items-center">
+                    <div class="col-lg-6 order-lg-1">
+                        <div class="p-5">
+                            <h2 class="display-4">Hi Candidate!</h2>
+                            <p>You are one of the candidates, please deposit some soul as soon as possible to let start the election.</p>
+                            <form onSubmit="App.deposit_soul(); return false;" role="form">
+                                <div class="form-group">
+                                    Soul:<input id="soul" class="form-control" type="number" min="1"></input>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn btn-primary">Deposit</button>
+                            </form> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Content section 1-->
         <section id="scroll">
             <div class="container px-5">
@@ -55,14 +78,15 @@
                             <h6>The Escrow:</h6> <p>&nbsp;<span id="escrow"></span></p>
                             <h6>The Candidates :</h6>
                             <p id="candidates_list"></p>
-                            
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        <!-- Content section 2-->
-        <section>
+
+        <!-- Content section cast envelope-->
+        <section id="cast">
+            <center><h3>Casting Phase</h3></center>
             <div class="container px-5">
                 <div class="row gx-5 align-items-center">
                     <div class="col-lg-6">
@@ -71,14 +95,24 @@
                     <div class="col-lg-6">
                         <div class="p-5">
                             <h2 class="display-4">Cast envelope</h2>
-                            <select id='candidates'></select>
+                            <form onSubmit="App.cast_envelope(); return;" role="form">
+                                <div class="form-group">
+                                    Sigil:<input id="sigil" class="form-control" type="number"></input>
+                                    Candidate: <input id="candidate" class="form-control" type="text"></input>
+                                    Soul:<input id="soul1" class="form-control" type="number" min="1"></input>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn btn-primary">Cast</button>
+                            </form> 
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        <!-- Content section 3-->
-        <section>
+
+        <!-- Content section open envelope-->
+        <section id="open">
+            <center><h3>Opening Phase</h3></center>
             <div class="container px-5">
                 <div class="row gx-5 align-items-center">
                     <div class="col-lg-6 order-lg-2">
@@ -87,15 +121,25 @@
                     <div class="col-lg-6 order-lg-1">
                         <div class="p-5">
                             <h2 class="display-4">Open envelope</h2>
-                            <p>...</p>
+                            <form onSubmit="App.open_envelope(); return;" role="form">
+                                <div class="form-group">
+                                    Sigil:<input id="sigil_open" class="form-control" type="number"></input>
+                                    Candidate: <input id="candidate_open" class="form-control" type="text"></input>
+                                    Soul: <input id="soul_open" class="form-control" min="1" type="number"></input>
+                                </div>
+                                <br>
+                                <button type="submit" class="btn btn-primary">Open</button>
+                            </form> 
                         </div>
                     </div>
                 </div>
             </div>
         </section>
-        <!-- Content section 4-->
-        <section>
-          <div class="container px-5">
+
+        <!-- Content section see winner-->
+        <section id="winner">
+            <center><h3>Final Phase</h3></center>
+            <div class="container px-5">
               <div class="row gx-5 align-items-center">
                   <div class="col-lg-6">
                       <div class="p-5"><img class="img-fluid rounded-circle" src="assets/img/vote1.jpeg" alt="..." /></div>

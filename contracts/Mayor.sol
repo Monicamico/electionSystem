@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
 contract Mayor {
@@ -67,6 +68,9 @@ contract Mayor {
                                     candidates_deposit_soul: 0,
                                     envelopes_opened: 0,
                                     candidates_number: _candidates.length });
+        for (uint i =0; i < candidates.length; i++){
+            deposit[candidates[i]] = 0;
+        }
     }
 
     function getEscrow() public view returns(address payable) {
@@ -77,13 +81,45 @@ contract Mayor {
         return candidates;
     }
 
-    function deposit_soul() public payable {
-        require(deposit[msg.sender] == 0, "Candidates has already done deposit");
-        voting_condition.candidates_deposit_soul++;
-        deposit[msg.sender] = msg.value;
+    function hasDeposited(address account) public view returns(bool){
+        if (deposit[account] > 0) 
+            return true;
+        return false;
     }
 
-    function cast_envelope(bytes32 _envelope) canVote public {
+    function canCastEnvelope(address account) public view returns(bool){
+        bool boolean = (voting_condition.candidates_deposit_soul == voting_condition.candidates_number)
+                        && (voting_condition.envelopes_casted < voting_condition.quorum) 
+                        && (envelopes[account] == 0x0);
+        return boolean;
+    }
+
+    function canOpenEnvelope(address account) public view returns(bool){
+        bool boolean = (voting_condition.envelopes_casted == voting_condition.quorum) 
+                        && (envelopes[account] != 0x0) && (envelopes_opened[account] == false);
+        return boolean;
+    }
+
+    function canSeeWinner() public view returns(bool){
+        bool boolean = (voting_condition.envelopes_opened == voting_condition.quorum);
+        return boolean;
+    }
+
+    function deposit_soul(uint _soul) public {
+        bool is_candidate = false;
+        for (uint i =0; i < candidates.length; i++){
+            if (candidates[i] == msg.sender)
+                is_candidate = true;
+        }
+        require(is_candidate == true, "Account must be a Candidate");
+        require(deposit[msg.sender] == 0, "Candidates has already done deposit");
+        voting_condition.candidates_deposit_soul++;
+        deposit[msg.sender] = _soul;
+    }
+
+    function cast_envelope(uint _sigil, address _candidate, uint _soul) canVote public {
+        require(_soul > 0, "Soul < 0");
+        bytes32 _envelope = keccak256(abi.encode(_sigil,_candidate, _soul));
         if(envelopes[msg.sender] == 0x0)
             voting_condition.envelopes_casted++;
         envelopes[msg.sender] = _envelope;
@@ -98,7 +134,7 @@ contract Mayor {
         bytes32 _casted_envelope = envelopes[msg.sender];
         bytes32 _sent_envelope = 0x0;
         uint _soul = msg.value; //take the soul sent by the voter
-	    _sent_envelope = compute_envelope(_sigil,_candidate_symbol,_soul); //compute the hash
+	    _sent_envelope = keccak256(abi.encode(_sigil,_candidate_symbol,_soul)); //compute the hash
         //check that the envelope is equal to the one casted
         require(_casted_envelope == _sent_envelope,"Sent envelope does not correspond to the one casted");
 	    //mark the envelope as opened
@@ -113,11 +149,6 @@ contract Mayor {
         
 	    //emit the envelope opened event
         emit EnvelopeOpen(msg.sender,_soul, _candidate_symbol);
-    }
-
-    function compute_envelope(uint _sigil, address _candidate, uint _soul) public pure returns(bytes32) {
-            require(_soul > 0, "Soul has to be greater than zero"); //soul must be > 0
-            return keccak256(abi.encode(_sigil, _candidate, _soul));
     }
 
     function getWinner() canCheckOutcome private view returns(address payable){

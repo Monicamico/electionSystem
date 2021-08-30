@@ -1,9 +1,18 @@
+
 App = {
     web3Provider: null,
     contracts: {},
     account: '0x0',
     loading: false,
+    candidate: false,
+    canCast: false,
+    canOpen: false,
+    canWinner: false,
+    deposited: true,
     contractInstance: null,
+    quorum: 0,
+    escrow: '0x0',
+    candidates_list: [],
   
     init: async () => {
       await App.initWeb3()
@@ -49,52 +58,151 @@ App = {
       const contract = await $.getJSON('Mayor.json')
       App.contracts.Mayor = TruffleContract(contract)
       App.contracts.Mayor.setProvider(App.web3Provider)
+      
+      
     },
   
-    render: async () => {
+    render: async() => {
+
       // Prevent double render
       if (App.loading) {
         return
       }
-      // Update app loading state
+
       App.setLoading(true)
-  
-      // Set the current blockchain account
-      App.account = web3.eth.accounts[0]
-      $('#account').html(App.account)
-  
+
       // Load smart contract
       const contract = await App.contracts.Mayor.deployed()
       App.contractInstance = contract
 
+      // Set the current blockchain account
+      App.account = web3.eth.accounts[0]
+      $('#account').html(App.account) 
+
       // Load escrow and candidates
-      const escrow = await App.contractInstance.getEscrow();
-      $('#escrow').html(escrow)
-      const candidates = await App.contractInstance.getCandidates();
-      console.log(candidates);
-      const candidates_list = candidates;
+      App.escrow = await App.contractInstance.getEscrow();
+      $('#escrow').html(App.escrow)
+      App.candidates_list = await App.contractInstance.getCandidates();
       var mySelect1 = $('#candidates_list');
-      $.each(candidates_list, function(val, text) {
+      $.each(App.candidates_list, function(val, text) {
           mySelect1.append(
-            $('<option></option>').val(val).html(text)
+            $('<p></p>').val(val).html(text)
           );
       });
-      var mySelect = $('#candidates');
-      $.each(candidates, function(val, text) {
-          mySelect.append(
-            $('<option></option>').val(val).html(text)
-          );
-      });
-      
+
+      if (App.candidates_list.includes(App.account)) {
+        var deposited_var = await App.contractInstance.hasDeposited(App.account);
+        App.setDeposited(deposited_var)
+      } else {
+        App.setCandidate(false)
+      }
+
+      App.canCast = await App.contractInstance.canCastEnvelope(App.account);
+      App.canOpen = await App.contractInstance.canOpenEnvelope(App.account);
+      App.canWinner = await App.contractInstance.canSeeWinner();
+      App.setOpen(App.canOpen)
+      App.setCast(App.canCast)
+      App.setWinner(App.canWinner)
       App.setLoading(false)
     },
   
-    /*set: async () => {
+    cast_envelope: async () => {
       App.setLoading(true)
-      const newValue = $('#newValue').val()
-      await App.contractInstance.set(newValue)
-      window.alert('Value updated! Refresh this page to see the new value (it might take a few seconds).')
-    },*/
+      const sigil = $('#sigil').val()
+      const candidate = $('#candidate').val()
+      const soul = $('#soul1').val()
+      const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul)
+      window.alert('Envelope casted.')
+      App.setCast(false) //disabilito cast
+      App.setLoading(false)
+      window.alert('Envelope casted.')
+    },
+
+    deposit_soul: async () => {
+      App.setLoading(true)
+      const soul = $('#soul').val()
+      const deposited = await App.contractInstance.deposit_soul(soul)
+      App.setDeposited(true)
+      App.setLoading(false)
+      window.alert('Souls deposited successfully.')
+    },
+
+    open_envelope: async () => {
+      App.setLoading(true)
+      const sigil = $('#sigil_open').val()
+      const candidate = $('#candidate_open').val()
+      const soul = $('#soul_open').val()
+      //const envelope_opened = await App.contractInstance.open_envelope(sigil, candidate)
+      await web3.eth.sendTransaction({
+        from: App.account,
+        to: App.contractInstance.address,
+        data: web3.eth.abi.encodeFunctionCall({
+                  name: 'open_envelope',
+                  type: 'function',
+                  inputs: [{
+                      type: 'uint',
+                      name: '_sigil'
+                  },{
+                      type: 'address',
+                      name: '_candidate_symbol'
+                  }]
+              }, [sigil, candidate]),
+        value: web3.toWei(soul, "ether")
+      })
+      App.setOpen(false) //disabilito open
+      App.setLoading(false)
+      window.alert('Envelope opened.')
+    },
+
+    setCandidate: (boolean) => {
+      App.candidate = boolean
+      const content = $('#is_candidate')
+      if (boolean) {
+        content.show()
+      } else {
+        content.hide()
+      }
+    },
+
+    setDeposited: (boolean) => {
+      App.deposited = boolean
+      const content = $('#is_candidate')
+      if (boolean) {
+        content.hide()
+      } else {
+        content.show()
+      }
+    },
+
+    setCast: (boolean) => {
+      App.canCast = boolean
+      const content = $('#cast')
+      if (boolean) {
+        content.show()
+      } else {
+        content.hide()
+      }
+    },
+
+    setOpen: (boolean) => {
+      App.canOpen = boolean
+      const content = $('#open')
+      if (boolean) {
+        content.show()
+      } else {
+        content.hide()
+      }
+    },
+
+    setWinner: (boolean) => {
+      App.canWinner = boolean
+      const content = $('#winner')
+      if (boolean) {
+        content.show()
+      } else {
+        content.hide()
+      }
+    },
   
     setLoading: (boolean) => {
       App.loading = boolean
