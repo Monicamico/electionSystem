@@ -28,6 +28,7 @@ contract Mayor {
     }
 
     event NewMayor(address _candidate); 
+    event Deposited(address _candidate);
     event Sayonara(address _escrow);
     event Tie(address _escrow);
     event EnvelopeCast(address _voter);
@@ -46,7 +47,6 @@ contract Mayor {
     
     modifier canCheckOutcome() {
         require(voting_condition.envelopes_opened == voting_condition.quorum, "Cannot  check the winner, need to open all the sent envelopes");
-        require(voting_condition.winnerChecked == false);
         _;
     }
     
@@ -74,6 +74,8 @@ contract Mayor {
                                     winnerChecked: false });
         for (uint i =0; i < candidates.length; i++){
             deposit[candidates[i]] = 0;
+            votes[candidates[i]].souls = 0;
+            votes[candidates[i]].number = 0;
         }
     }
 
@@ -104,8 +106,13 @@ contract Mayor {
         return boolean;
     }
 
+    function canSetWinner() public view returns(bool){
+        bool boolean = (voting_condition.envelopes_opened == voting_condition.quorum) && (voting_condition.winnerChecked == false);
+        return boolean;
+    }
+
     function canSeeWinner() public view returns(bool){
-        bool boolean = (voting_condition.envelopes_opened == voting_condition.quorum);
+        bool boolean = (voting_condition.winnerChecked == true);
         return boolean;
     }
 
@@ -119,6 +126,7 @@ contract Mayor {
         require(deposit[msg.sender] == 0, "Candidates has already done deposit");
         voting_condition.candidates_deposit_soul++;
         deposit[msg.sender] = msg.value;
+        emit Deposited(msg.sender);
     }
 
     function cast_envelope(uint _sigil, address _candidate, uint _soul) canVote public {
@@ -159,24 +167,25 @@ contract Mayor {
     function getWinner() canCheckOutcome private returns(address payable){
         uint max_souls = 0;
         for(uint i=0; i < candidates.length; i++){
-            if (votes[candidates[i]].souls == max_souls && max_souls != 0){
-                if (votes[candidates[i]].number > votes[winner].number)
-                    winner = candidates[i];
-                else if (votes[candidates[i]].number == votes[winner].number){
+            address payable cand = candidates[i];
+            if (votes[cand].souls > max_souls){
+                max_souls = votes[cand].souls;
+                winner = cand;
+            }
+            else if (votes[cand].souls == max_souls && max_souls != 0){
+                if (votes[cand].number > votes[winner].number)
+                    winner = cand;
+                else if (votes[cand].number == votes[winner].number){
                     winner = escrow;
                     return escrow; //tie case
                 }   
             } 
-            if (votes[candidates[i]].souls > max_souls){
-                max_souls = votes[candidates[i]].souls;
-                winner = candidates[i];
-            }
-            
         }
         return winner;
     } 
 
     function seeWinner() public view returns(address payable){
+        require(voting_condition.winnerChecked == true);
         return winner;
     }
 
@@ -193,10 +202,10 @@ contract Mayor {
     }
 
     function mayor_or_sayonara() canCheckOutcome public {
-        require(voting_condition.winnerChecked == false);
         address payable voter;
         uint total_soul = 0;
         winner = getWinner();
+        voting_condition.winnerChecked = true;
         if (winner == escrow){
             for (uint i=0; i < candidates.length; i++) {
                 address candidate = candidates[i];
@@ -206,7 +215,7 @@ contract Mayor {
             }
             escrow.transfer(total_soul); 
             total_soul = 0;
-            voting_condition.winnerChecked = true;
+            
             emit Tie(escrow);
         } else {
             splitElectors(winner);
@@ -231,7 +240,6 @@ contract Mayor {
             }
             winner.transfer(total_soul); 
             total_soul = 0;
-            voting_condition.winnerChecked = true;
             emit NewMayor(winner);
         }
     }

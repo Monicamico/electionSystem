@@ -7,7 +7,7 @@ App = {
     candidate: false,
     canCast: false,
     canOpen: false,
-    canWinner: false,
+    canSetWinner: false,
     deposited: true,
     contractInstance: null,
     quorum: 0,
@@ -97,12 +97,17 @@ App = {
         App.setCandidate(false)
       }
 
+      const winner = await App.contractInstance.seeWinner()
+      $('#winner_candidate').html(winner)
+
       App.canCast = await App.contractInstance.canCastEnvelope(App.account);
       App.canOpen = await App.contractInstance.canOpenEnvelope(App.account);
-      App.canWinner = await App.contractInstance.canSeeWinner();
+      App.canSetWinner = await App.contractInstance.canSetWinner();
+      App.canSeeWinner = await App.contractInstance.canSeeWinner();
       App.setOpen(App.canOpen)
       App.setCast(App.canCast)
-      App.setWinner(App.canWinner)
+      App.setWinner(App.canSetWinner)
+      App.showResults(App.canSeeWinner);
       App.setLoading(false)
     },
   
@@ -131,7 +136,7 @@ App = {
       const sigil = $('#sigil_open').val()
       const candidate = $('#candidate_open').val()
       const soul = $('#soul_open').val()
-      App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul})
+      await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul})
       App.setOpen(false) //disabilito open
       App.setLoading(false)
       window.alert('Envelope opened.')
@@ -140,10 +145,10 @@ App = {
     mayor_or_sayonara: async () => {
       App.setLoading(true)
       await App.contractInstance.mayor_or_sayonara()
-      const winner = await App.contractInstance.seeWinner()
-      App.setLoading(false)
-      $('#thewinner').html(winner)
       window.alert('Winner setted.')
+      App.showResults(true);
+      App.setWinner(false);
+      App.setLoading(false)
     },
 
     setCandidate: (boolean) => {
@@ -187,12 +192,22 @@ App = {
     },
 
     setWinner: (boolean) => {
-      App.canWinner = boolean
+      App.canSetWinner = boolean
       const content = $('#winner')
       if (boolean) {
         content.show()
       } else {
         content.hide()
+      }
+    },
+
+    showResults: (boolean) => {
+      App.canSeeWinner = boolean
+      const content2 = $('#results')
+      if (boolean) {
+        content2.show()
+      } else {
+        content2.hide()
       }
     },
   
