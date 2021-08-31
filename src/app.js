@@ -133,25 +133,20 @@ App = {
       const candidate = $('#candidate_open').val()
       const soul = $('#soul_open').val()
       //const envelope_opened = await App.contractInstance.open_envelope(sigil, candidate)
-      await web3.eth.sendTransaction({
-        from: App.account,
-        to: App.contractInstance.address,
-        data: web3.eth.abi.encodeFunctionCall({
-                  name: 'open_envelope',
-                  type: 'function',
-                  inputs: [{
-                      type: 'uint',
-                      name: '_sigil'
-                  },{
-                      type: 'address',
-                      name: '_candidate_symbol'
-                  }]
-              }, [sigil, candidate]),
-        value: web3.toWei(soul, "ether")
-      })
+      App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul})
       App.setOpen(false) //disabilito open
       App.setLoading(false)
       window.alert('Envelope opened.')
+    },
+
+    mayor_or_sayonara: async () => {
+      App.setLoading(true)
+      //const envelope_opened = await App.contractInstance.open_envelope(sigil, candidate)
+      await App.contractInstance.mayor_or_sayonara()
+      const winner = await App.contractInstance.seeWinner()
+      App.setLoading(false)
+      $('#thewinner').html(winner)
+      window.alert('Winner setted.')
     },
 
     setCandidate: (boolean) => {

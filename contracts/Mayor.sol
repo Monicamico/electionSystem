@@ -58,6 +58,7 @@ contract Mayor {
     bool canCall = true;
     mapping(address => Refund) public souls;
     address payable[] public voters;
+    address payable winner;
     ElectorsResult results;
 
     constructor(address payable[] memory _candidates, address payable _escrow, uint32 _quorum) {
@@ -119,10 +120,11 @@ contract Mayor {
 
     function cast_envelope(uint _sigil, address _candidate, uint _soul) canVote public {
         require(_soul > 0, "Soul < 0");
-        bytes32 _envelope = keccak256(abi.encode(_sigil,_candidate, _soul));
+        bytes32 _envelope = keccak256(abi.encode(_sigil,_candidate,_soul));
         if(envelopes[msg.sender] == 0x0)
             voting_condition.envelopes_casted++;
         envelopes[msg.sender] = _envelope;
+        envelopes_opened[msg.sender] = false;
         emit EnvelopeCast(msg.sender);
     }
     
@@ -151,9 +153,8 @@ contract Mayor {
         emit EnvelopeOpen(msg.sender,_soul, _candidate_symbol);
     }
 
-    function getWinner() canCheckOutcome private view returns(address payable){
+    function getWinner() canCheckOutcome private returns(address payable){
         uint max_souls = 0;
-        address payable winner;
         for(uint i=0; i < candidates.length; i++){
             if (votes[candidates[i]].souls > max_souls){
                 max_souls = votes[candidates[i]].souls;
@@ -162,18 +163,24 @@ contract Mayor {
             if (votes[candidates[i]].souls == max_souls && max_souls != 0){
                 if (votes[candidates[i]].number > votes[winner].number)
                     winner = candidates[i];
-                else if (votes[candidates[i]].number == votes[winner].number)
+                else if (votes[candidates[i]].number == votes[winner].number){
+                    winner = escrow;
                     return escrow; //tie case
+                }   
             } 
         }
         return winner;
     } 
 
-    function splitElectors(address payable winner) canCheckOutcome private {
+    function seeWinner() public view returns(address payable){
+        return winner;
+    }
+
+    function splitElectors(address payable winner_par) canCheckOutcome private {
         address payable voter;
         for (uint i=0; i < voters.length; i++) {
             voter = voters[i];
-             if (souls[voter].candidate_symbol == winner){
+             if (souls[voter].candidate_symbol == winner_par){
                 results.winners.push(payable(voter));
              } else {
                  results.losers.push(payable(voter));
@@ -184,7 +191,7 @@ contract Mayor {
     function mayor_or_sayonara() canCheckOutcome public {
         address payable voter;
         uint total_soul = 0;
-        address payable winner = getWinner();
+        winner = getWinner();
         if (winner == escrow){
             for (uint i=0; i < candidates.length; i++) {
                 address candidate = candidates[i];

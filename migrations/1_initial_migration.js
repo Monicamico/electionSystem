@@ -5,5 +5,5 @@ module.exports = async function (deployer) {
   deployer.deploy(Migrations);
   var account_list = []
   account_list = await web3.eth.getAccounts()
-  deployer.deploy(Mayor,[account_list[2], account_list[3],account_list[1]],account_list[4],3);
+  deployer.deploy(Mayor,[account_list[2]],account_list[4],1);
 };

@@ -27,6 +27,7 @@
         "truffle-hdwallet-provider": "^1.0.0-web3one.0"
     },
     "dependencies": {
+        "browserify": "^17.0.0",
         "metamask-extension-provider": "^3.0.0",
         "solc": "^0.4.24",
         "web3-eth-abi": "^1.5.2"
