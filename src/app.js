@@ -97,13 +97,14 @@ App = {
         App.setCandidate(false)
       }
 
-      const winner = await App.contractInstance.seeWinner()
-      $('#winner_candidate').html(winner)
-
       App.canCast = await App.contractInstance.canCastEnvelope(App.account);
       App.canOpen = await App.contractInstance.canOpenEnvelope(App.account);
       App.canSetWinner = await App.contractInstance.canSetWinner();
       App.canSeeWinner = await App.contractInstance.canSeeWinner();
+      if (App.canSeeWinner){
+        const winner = await App.contractInstance.seeWinner()
+        $('#winner_candidate').html(winner)
+      }
       App.setOpen(App.canOpen)
       App.setCast(App.canCast)
       App.setWinner(App.canSetWinner)
