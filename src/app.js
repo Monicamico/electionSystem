@@ -112,7 +112,6 @@ App = {
       const candidate = $('#candidate').val()
       const soul = $('#soul1').val()
       const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul)
-      window.alert('Envelope casted.')
       App.setCast(false) //disabilito cast
       App.setLoading(false)
       window.alert('Envelope casted.')
@@ -121,7 +120,7 @@ App = {
     deposit_soul: async () => {
       App.setLoading(true)
       const soul = $('#soul').val()
-      const deposited = await App.contractInstance.deposit_soul(soul)
+      const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul})
       App.setDeposited(true)
       App.setLoading(false)
       window.alert('Souls deposited successfully.')
@@ -132,7 +131,6 @@ App = {
       const sigil = $('#sigil_open').val()
       const candidate = $('#candidate_open').val()
       const soul = $('#soul_open').val()
-      //const envelope_opened = await App.contractInstance.open_envelope(sigil, candidate)
       App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul})
       App.setOpen(false) //disabilito open
       App.setLoading(false)
@@ -141,7 +139,6 @@ App = {
 
     mayor_or_sayonara: async () => {
       App.setLoading(true)
-      //const envelope_opened = await App.contractInstance.open_envelope(sigil, candidate)
       await App.contractInstance.mayor_or_sayonara()
       const winner = await App.contractInstance.seeWinner()
       App.setLoading(false)

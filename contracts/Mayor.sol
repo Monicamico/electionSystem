@@ -24,6 +24,7 @@ contract Mayor {
         uint32 envelopes_opened;
         uint256 candidates_deposit_soul;
         uint256 candidates_number;
+        bool winnerChecked;
     }
 
     event NewMayor(address _candidate); 
@@ -45,6 +46,7 @@ contract Mayor {
     
     modifier canCheckOutcome() {
         require(voting_condition.envelopes_opened == voting_condition.quorum, "Cannot  check the winner, need to open all the sent envelopes");
+        require(voting_condition.winnerChecked == false);
         _;
     }
     
@@ -68,7 +70,8 @@ contract Mayor {
                                     envelopes_casted: 0,
                                     candidates_deposit_soul: 0,
                                     envelopes_opened: 0,
-                                    candidates_number: _candidates.length });
+                                    candidates_number: _candidates.length,
+                                    winnerChecked: false });
         for (uint i =0; i < candidates.length; i++){
             deposit[candidates[i]] = 0;
         }
@@ -106,7 +109,7 @@ contract Mayor {
         return boolean;
     }
 
-    function deposit_soul(uint _soul) public {
+    function deposit_soul() public payable {
         bool is_candidate = false;
         for (uint i =0; i < candidates.length; i++){
             if (candidates[i] == msg.sender)
@@ -115,7 +118,7 @@ contract Mayor {
         require(is_candidate == true, "Account must be a Candidate");
         require(deposit[msg.sender] == 0, "Candidates has already done deposit");
         voting_condition.candidates_deposit_soul++;
-        deposit[msg.sender] = _soul;
+        deposit[msg.sender] = msg.value;
     }
 
     function cast_envelope(uint _sigil, address _candidate, uint _soul) canVote public {
@@ -156,10 +159,6 @@ contract Mayor {
     function getWinner() canCheckOutcome private returns(address payable){
         uint max_souls = 0;
         for(uint i=0; i < candidates.length; i++){
-            if (votes[candidates[i]].souls > max_souls){
-                max_souls = votes[candidates[i]].souls;
-                winner = candidates[i];
-            }
             if (votes[candidates[i]].souls == max_souls && max_souls != 0){
                 if (votes[candidates[i]].number > votes[winner].number)
                     winner = candidates[i];
@@ -168,6 +167,11 @@ contract Mayor {
                     return escrow; //tie case
                 }   
             } 
+            if (votes[candidates[i]].souls > max_souls){
+                max_souls = votes[candidates[i]].souls;
+                winner = candidates[i];
+            }
+            
         }
         return winner;
     } 
@@ -189,6 +193,7 @@ contract Mayor {
     }
 
     function mayor_or_sayonara() canCheckOutcome public {
+        require(voting_condition.winnerChecked == false);
         address payable voter;
         uint total_soul = 0;
         winner = getWinner();
@@ -201,6 +206,7 @@ contract Mayor {
             }
             escrow.transfer(total_soul); 
             total_soul = 0;
+            voting_condition.winnerChecked = true;
             emit Tie(escrow);
         } else {
             splitElectors(winner);
@@ -225,6 +231,7 @@ contract Mayor {
             }
             winner.transfer(total_soul); 
             total_soul = 0;
+            voting_condition.winnerChecked = true;
             emit NewMayor(winner);
         }
     }
