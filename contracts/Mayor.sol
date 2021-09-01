@@ -196,7 +196,7 @@ contract Mayor {
              if (souls[voter].candidate_symbol == winner_par){
                 results.winners.push(payable(voter));
              } else {
-                 results.losers.push(payable(voter));
+                results.losers.push(payable(voter));
              }
         }
     }
