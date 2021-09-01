@@ -83,16 +83,18 @@ App = {
       App.escrow = await App.contractInstance.getEscrow();
       $('#escrow').html(App.escrow)
       App.candidates_list = await App.contractInstance.getCandidates();
-      var mySelect1 = $('#candidates_list');
+      var List = $('#candidates_list');
       $.each(App.candidates_list, function(val, text) {
-          mySelect1.append(
+          List.append(
             $('<p></p>').val(val).html(text)
           );
       });
 
       if (App.candidates_list.includes(App.account)) {
-        var deposited_var = await App.contractInstance.hasDeposited(App.account);
-        App.setDeposited(deposited_var)
+        const deposited_var = await App.contractInstance.hasDeposited(App.account);
+        if (deposited_var != undefined) { 
+          App.setDeposited(deposited_var) 
+        } else App.setCandidate(false)
       } else {
         App.setCandidate(false)
       }
@@ -125,7 +127,7 @@ App = {
 
     deposit_soul: async () => {
       App.setLoading(true)
-      const soul = $('#soul').val()
+      const soul = $('#soul').val() * 1000000000000000000;
       const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul})
       App.setDeposited(true)
       App.setLoading(false)
@@ -136,8 +138,8 @@ App = {
       App.setLoading(true)
       const sigil = $('#sigil_open').val()
       const candidate = $('#candidate_open').val()
-      const soul = $('#soul_open').val()
-      await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul})
+      const soul = $('#soul_open').val() * 1000000000000000000;
+      const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul});
       App.setOpen(false) //disabilito open
       App.setLoading(false)
       window.alert('Envelope opened.')

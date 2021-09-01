@@ -54,7 +54,7 @@
                             <p>You are one of the candidates, please deposit some soul as soon as possible to let start the election.</p>
                             <form onSubmit="App.deposit_soul(); return false;" role="form">
                                 <div class="form-group">
-                                    Soul:<input id="soul" class="form-control" type="number" min="1"></input>
+                                    Soul (ETH):<input id="soul" class="form-control" type="number" min="1"></input>
                                 </div>
                                 <br>
                                 <button type="submit" class="btn btn-primary">Deposit</button>
@@ -99,7 +99,7 @@
                                 <div class="form-group">
                                     Sigil:<input id="sigil" class="form-control" type="number"></input>
                                     Candidate: <input id="candidate" class="form-control" type="text"></input>
-                                    Soul:<input id="soul1" class="form-control" type="number" min="1"></input>
+                                    Soul (ETH):<input id="soul1" class="form-control" type="number" min="1"></input>
                                 </div>
                                 <br>
                                 <button type="submit" class="btn btn-primary">Cast</button>
@@ -125,7 +125,7 @@
                                 <div class="form-group">
                                     Sigil:<input id="sigil_open" class="form-control" type="number"></input>
                                     Candidate: <input id="candidate_open" class="form-control" type="text"></input>
-                                    Soul: <input id="soul_open" class="form-control" min="1" type="number"></input>
+                                    Soul (ETH): <input id="soul_open" class="form-control" min="1" type="number"></input>
                                 </div>
                                 <br>
                                 <button type="submit" class="btn btn-primary">Open</button>
@@ -168,7 +168,7 @@
                   <div class="p-5">
                       <h2 class="display-4">Results</h2>
                        <br>
-                       <h6>The Winner:</h6> <p>&nbsp;<span id="winner_candidate"></span></p>
+                       <h6>The Winner is &nbsp;<span id="winner_candidate"></span></h6>
                   </div>
               </div>
           </div>
