@@ -15702,7 +15702,7 @@ module.exports = {
     toNumber: toNumber
 };
 
-}).call(this)}).call(this,{"isBuffer":require("../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
+}).call(this)}).call(this,{"isBuffer":require("../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js")})
 },{"../../../../../../../usr/local/lib/node_modules/browserify/node_modules/is-buffer/index.js":72,"bn.js":48,"eth-lib/lib/hash":66,"ethereum-bloom-filters":49,"number-to-bn":57,"utf8":61}],66:[function(require,module,exports){
 // This was ported from https://github.com/emn178/js-sha3, with some minor
 // modifications and pruning. It is licensed under MIT:
