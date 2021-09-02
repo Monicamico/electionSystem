@@ -92,9 +92,7 @@ App = {
 
       if (App.candidates_list.includes(App.account)) {
         const deposited_var = await App.contractInstance.hasDeposited(App.account);
-        if (deposited_var != undefined) { 
-          App.setDeposited(deposited_var) 
-        } else App.setCandidate(false)
+        App.setDeposited(deposited_var) 
       } else {
         App.setCandidate(false)
       }
@@ -104,6 +102,7 @@ App = {
       App.canSetWinner = await App.contractInstance.canSetWinner();
       App.canSeeWinner = await App.contractInstance.canSeeWinner();
       if (App.canSeeWinner){
+        App.setCandidate(false) // il deposito sarà vuoto a causa del trasferimento di eth ma la sezione va nascosta
         const winner = await App.contractInstance.seeWinner()
         $('#winner_candidate').html(winner)
       }
@@ -119,7 +118,8 @@ App = {
       const sigil = $('#sigil').val()
       const candidate = $('#candidate').val()
       const soul = $('#soul1').val()
-      const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul)
+      const soul_eth = web3.toWei(soul)
+      const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul_eth)
       App.setCast(false) //disabilito cast
       App.setLoading(false)
       window.alert('Envelope casted.')
@@ -127,19 +127,25 @@ App = {
 
     deposit_soul: async () => {
       App.setLoading(true)
-      const soul = $('#soul').val() * 1000000000000000000;
-      const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul})
-      App.setDeposited(true)
-      App.setLoading(false)
-      window.alert('Souls deposited successfully.')
+      const soul = $('#soul').val();
+      const soul_eth = web3.toWei(soul)
+      if (soul == 0){
+        window.alert('Soul must be greater than 0.')
+      } else {
+        const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul_eth})
+        App.setDeposited(true)
+        App.setLoading(false)
+        window.alert('Souls deposited successfully.')
+      }
     },
 
     open_envelope: async () => {
       App.setLoading(true)
       const sigil = $('#sigil_open').val()
       const candidate = $('#candidate_open').val()
-      const soul = $('#soul_open').val() * 1000000000000000000;
-      const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul});
+      const soul = $('#soul_open').val()
+      const soul_eth = web3.toWei(soul)
+      const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul_eth});
       App.setOpen(false) //disabilito open
       App.setLoading(false)
       window.alert('Envelope opened.')

@@ -117,15 +117,15 @@ contract Mayor {
     }
 
     function deposit_soul() public payable {
+        require(deposit[msg.sender] == 0, "Candidates has already done deposit");
         bool is_candidate = false;
         for (uint i =0; i < candidates.length; i++){
             if (candidates[i] == msg.sender)
                 is_candidate = true;
         }
         require(is_candidate == true, "Account must be a Candidate");
-        require(deposit[msg.sender] == 0, "Candidates has already done deposit");
         voting_condition.candidates_deposit_soul++;
-        deposit[msg.sender] = msg.value;
+        deposit[msg.sender] = msg.value; //controllo su msg.value fatto su app.js 
         emit Deposited(msg.sender);
     }
 
