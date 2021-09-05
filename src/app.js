@@ -1,14 +1,13 @@
-
 App = {
     web3Provider: null,
     contracts: {},
     account: '0x0',
     loading: false,
-    candidate: false,
-    canCast: false,
-    canOpen: false,
-    canSetWinner: false,
-    deposited: true,
+    candidate: false, // true if the App.account is a candidate, have to deposit some souls (initial phase)
+    canCast: false, // true if the App.account can cast the envelope (first phase)
+    canOpen: false, // true if the App.account can open the envelope (second phase)
+    canSetWinner: false, // true if the winner can be calculated
+    deposited: true, // true if the App.account is a candidate that have already deposited some souls
     contractInstance: null,
     quorum: 0,
     escrow: '0x0',
@@ -54,11 +53,9 @@ App = {
     },
   
     initContracts: async () => {
-      const contract = await $.getJSON('Mayor.json')
-      App.contracts.Mayor = TruffleContract(contract)
+      const contract = await $.getJSON('Mayor.json') // get the contract JSON
+      App.contracts.Mayor = TruffleContract(contract) 
       App.contracts.Mayor.setProvider(App.web3Provider)
-      
-      
     },
   
     render: async() => {
@@ -78,7 +75,7 @@ App = {
       App.account = web3.eth.accounts[0]
       $('#account').html(App.account) 
 
-      // Load escrow and candidates
+      // Load escrow and candidates and show them in the HTML
       App.escrow = await App.contractInstance.getEscrow();
       $('#escrow').html(App.escrow)
       App.candidates_list = await App.contractInstance.getCandidates();
@@ -89,50 +86,80 @@ App = {
           );
       });
 
+      // check if the App.account is a candidate
       if (App.candidates_list.includes(App.account)) {
+        // check if the candidate has already deposit
         const deposited_var = await App.contractInstance.hasDeposited(App.account);
+        // set deposited or not, this also shows or hides the HTML section for the deposit
         App.setDeposited(deposited_var) 
       } else {
+        // set as not a candidate
         App.setCandidate(false)
       }
 
-      App.canCast = await App.contractInstance.canCastEnvelope(App.account);
+      // check if is the first phase and the account can cast the envelope:
+      // account has not already casted and the quorum is not reached yet
+      App.canCast = await App.contractInstance.canCastEnvelope(App.account); 
+
+      // check if is the second phase and the account can open the envelope:
+      // account has already casted and the quorum is reached yet
       App.canOpen = await App.contractInstance.canOpenEnvelope(App.account);
+
+      // check if is the third phase, the winner could be calculated
       App.canSetWinner = await App.contractInstance.canSetWinner();
+
+      // check if the result can be shown, the winner has already be setted
       App.canSeeWinner = await App.contractInstance.canSeeWinner();
       if (App.canSeeWinner){
-        App.setCandidate(false) // il deposito sarà vuoto a causa del trasferimento di eth ma la sezione va nascosta
-        const winner = await App.contractInstance.seeWinner()
-        $('#winner_candidate').html(winner)
+        App.setDeposited(true) // this because the candidate's deposit is empty because of the eth transfer but we need to hide the section deposit
+
+        const winner = await App.contractInstance.seeWinner() // take the winner
+        $('#winner_candidate').html(winner) // pass the value to the HTML
       }
-      App.setOpen(App.canOpen)
-      App.setCast(App.canCast)
-      App.setWinner(App.canSetWinner)
-      App.showResults(App.canSeeWinner);
+
+      App.setOpen(App.canOpen) // show or hide the Open HTML section
+      App.setCast(App.canCast) // show or hide the cast HTML section 
+      App.setWinner(App.canSetWinner) // show or hide the set winner HTML section 
+      App.showResults(App.canSeeWinner); // show or hide Result HTML section 
+
       App.setLoading(false)
     },
   
+    // call the cast_envelope into the smart contract
     cast_envelope: async () => {
       App.setLoading(true)
       const sigil = $('#sigil').val()
       const candidate = $('#candidate').val()
       const soul = $('#soul1').val()
-      const soul_eth = web3.toWei(soul)
-      const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul_eth)
-      App.setCast(false) //disabilito cast
-      App.setLoading(false)
-      window.alert('Envelope casted.')
-    },
-
-    deposit_soul: async () => {
-      App.setLoading(true)
-      const soul = $('#soul').val();
-      const soul_eth = web3.toWei(soul)
       if (soul == 0){
         window.alert('Soul must be greater than 0.')
       } else {
+        // check if the candidate voted is into the candidates list
+        if (App.candidates_list.includes(candidate)) {
+          const soul_eth = web3.toWei(soul) // convert the eth in Wei
+          //call the contract's function
+          const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul_eth)
+          App.setCast(false) //disabilita cast
+          App.setLoading(false)
+          window.alert('Envelope casted.')
+        } else {
+          App.setLoading(false)
+          window.alert(candidate + ' is not a Candidate!')
+        }
+     }
+    },
+
+    // deposit some souls, called by a candidate
+    deposit_soul: async () => {
+      App.setLoading(true)
+      const soul = $('#soul').val(); 
+      const soul_eth = web3.toWei(soul) // convert the eth in Wei 
+      if (soul == 0){
+        window.alert('Soul must be greater than 0.')
+      } else {
+        // transfer the eths and call the deposit_soul in the smart contract
         const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul_eth})
-        App.setDeposited(true)
+        App.setDeposited(true) // set deposited as true, hide the deposit HTML section 
         App.setLoading(false)
         window.alert('Souls deposited successfully.')
       }
@@ -143,21 +170,31 @@ App = {
       const sigil = $('#sigil_open').val()
       const candidate = $('#candidate_open').val()
       const soul = $('#soul_open').val()
-      const soul_eth = web3.toWei(soul)
-      const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul_eth});
-      App.setOpen(false) //disabilito open
-      App.setLoading(false)
-      window.alert('Envelope opened.')
+      // check if is a candidate
+      if (App.candidates_list.includes(candidate)) {
+        const soul_eth = web3.toWei(soul)
+        // send the eths and call the open_envelope in the smart contract
+        const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul_eth});
+        App.setOpen(false) //disabilito open
+        App.setLoading(false)
+        window.alert('Envelope opened.')
+      } else {
+        App.setLoading(false)
+        window.alert(candidate + ' is not a Candidate!')
+      }
     },
 
     mayor_or_sayonara: async () => {
       App.setLoading(true)
-      await App.contractInstance.mayor_or_sayonara()
+      await App.contractInstance.mayor_or_sayonara() // calls the mayor_or_sayonara function in the smart contract
       window.alert('Winner setted.')
-      App.showResults(true);
-      App.setWinner(false);
+      App.showResults(true); //shows the winner
+      App.setWinner(false); // hide the set winner section
       App.setLoading(false)
     },
+
+
+    /* Functions to show or hide sections */
 
     setCandidate: (boolean) => {
       App.candidate = boolean
@@ -232,6 +269,7 @@ App = {
       }
     }
   }
+  
   
   $(() => {
     $(window).load(() => {
