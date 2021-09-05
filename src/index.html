@@ -95,7 +95,7 @@
                     <div class="col-lg-6">
                         <div class="p-5">
                             <h2 class="display-4">Cast envelope</h2>
-                            <form onSubmit="App.cast_envelope(); return;" role="form">
+                            <form onSubmit="App.cast_envelope(); return false;" role="form">
                                 <div class="form-group">
                                     Sigil:<input id="sigil" class="form-control" type="number"></input>
                                     Candidate: <input id="candidate" class="form-control" type="text"></input>
@@ -121,7 +121,7 @@
                     <div class="col-lg-6 order-lg-1">
                         <div class="p-5">
                             <h2 class="display-4">Open envelope</h2>
-                            <form onSubmit="App.open_envelope(); return;" role="form">
+                            <form onSubmit="App.open_envelope(); return false;" role="form">
                                 <div class="form-group">
                                     Sigil:<input id="sigil_open" class="form-control" type="number"></input>
                                     Candidate: <input id="candidate_open" class="form-control" type="text"></input>
@@ -147,7 +147,7 @@
                   <div class="col-lg-6">
                       <div class="p-5">
                           <h2 class="display-4">See the Winner</h2>
-                          <form onSubmit="App.mayor_or_sayonara(); return;" role="form">
+                          <form onSubmit="App.mayor_or_sayonara(); return false;" role="form">
                             
                             <button id="calculate_winner"type="submit" class="btn btn-primary">Mayor or Sayonara!</button>
                            </form> 

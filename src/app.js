@@ -132,7 +132,7 @@ App = {
       const candidate = $('#candidate').val()
       const soul = $('#soul1').val()
       if (soul == 0){
-        window.alert('Soul must be greater than 0.')
+        alert('Soul must be greater than 0.')
       } else {
         // check if the candidate voted is into the candidates list
         if (App.candidates_list.includes(candidate)) {
@@ -141,10 +141,10 @@ App = {
           const envelope = await App.contractInstance.cast_envelope(sigil, candidate, soul_eth)
           App.setCast(false) //disabilita cast
           App.setLoading(false)
-          window.alert('Envelope casted.')
+          alert('Envelope casted');
         } else {
           App.setLoading(false)
-          window.alert(candidate + ' is not a Candidate!')
+          alert(candidate + ' is not a Candidate!')
         }
      }
     },
@@ -155,13 +155,13 @@ App = {
       const soul = $('#soul').val(); 
       const soul_eth = web3.toWei(soul) // convert the eth in Wei 
       if (soul == 0){
-        window.alert('Soul must be greater than 0.')
+        alert('Soul must be greater than 0.')
       } else {
         // transfer the eths and call the deposit_soul in the smart contract
         const deposited = await App.contractInstance.deposit_soul.sendTransaction({value: soul_eth})
         App.setDeposited(true) // set deposited as true, hide the deposit HTML section 
         App.setLoading(false)
-        window.alert('Souls deposited successfully.')
+        alert('Souls deposited successfully.')
       }
     },
 
@@ -177,20 +177,22 @@ App = {
         const op = await App.contractInstance.open_envelope.sendTransaction(sigil,candidate, {value: soul_eth});
         App.setOpen(false) //disabilito open
         App.setLoading(false)
-        window.alert('Envelope opened.')
+        alert('Envelope opened.')
       } else {
         App.setLoading(false)
-        window.alert(candidate + ' is not a Candidate!')
+        alert(candidate + ' is not a Candidate!')
       }
     },
 
     mayor_or_sayonara: async () => {
       App.setLoading(true)
       await App.contractInstance.mayor_or_sayonara() // calls the mayor_or_sayonara function in the smart contract
-      window.alert('Winner setted.')
       App.showResults(true); //shows the winner
       App.setWinner(false); // hide the set winner section
+      const winner_set = await App.contractInstance.seeWinner() // take the winner
+      $('#winner_candidate').html(winner_set) 
       App.setLoading(false)
+      alert('Winner setted.')
     },
 
 
