@@ -210,7 +210,6 @@ contract Mayor {
                 // set the winner as the escrow
                 else if (votes[cand].number == votes[winner].number){
                     winner = escrow;
-                    return escrow; //tie case
                 }   
             } 
         }
